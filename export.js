@@ -148,7 +148,7 @@
         compression: 'STORE'
       });
 
-      const zipFileName = `dify_apps_workflow_yaml_${dynamicDate}.zip`;
+      const zipFileName = `dify_apps_yaml_${dynamicDate}.zip`;
       const downloadUrl = URL.createObjectURL(zipBlob);
       const aTag = document.createElement('a');
       aTag.href = downloadUrl;
