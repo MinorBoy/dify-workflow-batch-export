@@ -130,7 +130,7 @@
         })
         .then(exportJson => {
           const safeAppName = (app.name || `unknown-app-${app.id}`).replace(/[<>:"/\\|?*]/g, '_'); // 清理非法文件名字符
-          const yamlFileName = `${safeAppName}_dify_workflow_${dynamicDate}.yaml`;
+          const yamlFileName = `${safeAppName}.yaml`;
           zip.file(yamlFileName, exportJson.data);
           console.log(`✅ 已添加到压缩包 (${index + 1}/${apps.length})：${yamlFileName}`);
           return true;
