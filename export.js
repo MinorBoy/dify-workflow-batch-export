@@ -102,7 +102,7 @@
     try {
       // 3.1 获取应用列表（使用完整 URL）
       console.log('🔍 正在获取Dify应用列表...');
-      const appRes = await fetch(`${API_BASE}/apps?page=1&limit=30&name=&is_created_by_me=false`, {
+      const appRes = await fetch(`${API_BASE}/apps?page=1&limit=100&name=&is_created_by_me=false`, {
         headers: { 'Authorization': `Bearer ${token}` },
         credentials: 'include'
       });
