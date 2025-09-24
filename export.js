@@ -24,11 +24,11 @@
       
       // 备用CDN列表（按优先级排序）
       const jsZipSources = [
-        'https://cdn.staticfile.org/jszip/3.10.1/jszip.min.js',
-        'https://static.cloud.tencent.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-        'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
-        'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+        'https://cdn.staticfile.org/jszip/3.10.1/jszip.min.js', // 阿里云静态资源CDN（国内节点，稳定性强）
+        'https://static.cloud.tencent.com/ajax/libs/jszip/3.10.1/jszip.min.js', // 腾讯云静态资源CDN（国内节点，覆盖广）
+        'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js', // jsDelivr CDN（国际知名开源库CDN）
+        'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js', // unpkg CDN（专注于npm包分发的CDN）
+        'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' // Cloudflare CDN（cdnjs项目，开源库分发）
       ];
       
       let currentSourceIndex = 0;
