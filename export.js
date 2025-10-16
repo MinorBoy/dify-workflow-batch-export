@@ -86,7 +86,52 @@
     return `${year}${month}${day}`;
   };
 
-  // 3. 核心：获取应用YAML并打包成ZIP
+  // 3. 获取所有应用列表（支持分页）
+  const fetchAllApps = async (API_BASE, token) => {
+    const allApps = [];
+    let page = 1;
+    let hasMore = true;
+
+    console.log('🔍 正在获取Dify应用列表...');
+
+    while (hasMore) {
+      try {
+        const response = await fetch(`${API_BASE}/apps?page=${page}&limit=100&name=&is_created_by_me=false`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error(`应用列表请求失败：${response.status}`);
+        }
+
+        const appData = await response.json();
+        const apps = appData.data || [];
+        
+        if (apps.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        allApps.push(...apps);
+        console.log(`✅ 已获取第${page}页应用，数量：${apps.length}`);
+        
+        // 如果当前页应用数量小于limit，说明已经是最后一页
+        if (apps.length < 100) {
+          hasMore = false;
+        }
+        
+        page++;
+      } catch (err) {
+        console.error(`❌ 获取第${page}页应用失败：`, err);
+        hasMore = false;
+      }
+    }
+
+    return allApps;
+  };
+
+  // 4. 核心：获取应用YAML并打包成ZIP
   const fetchAppsAndZip = async (JSZip) => {
     // =============== 关键修改：使用动态 API 前缀 ===============
     const API_BASE = getApiBase();
@@ -100,23 +145,16 @@
     }
 
     try {
-      // 3.1 获取应用列表（使用完整 URL）
-      console.log('🔍 正在获取Dify应用列表...');
-      const appRes = await fetch(`${API_BASE}/apps?page=1&limit=100&name=&is_created_by_me=false`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        credentials: 'include'
-      });
-      if (!appRes.ok) throw new Error(`应用列表请求失败：${appRes.status}`);
-
-      const appData = await appRes.json();
-      const apps = appData.data || [];
+      // 4.1 获取所有应用列表（使用完整 URL，支持分页）
+      const apps = await fetchAllApps(API_BASE, token);
+      
       if (apps.length === 0) {
         console.error('❌ 未获取到任何应用数据');
         return;
       }
       console.log(`✅ 共获取到 ${apps.length} 个应用，开始下载YAML并打包...`);
 
-      // 3.2 初始化ZIP，批量添加YAML文件
+      // 4.2 初始化ZIP，批量添加YAML文件
       const zip = new JSZip();
 
       const addToZipPromises = apps.map((app, index) => {
