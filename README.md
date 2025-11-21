@@ -12,6 +12,13 @@
 - 🌐 **智能 API 检测**：自动检测 Dify 控制台的 API 地址
 - 📅 **动态文件命名**：自动添加导出日期到文件名中
 
+## 版本兼容性说明
+
+- **nozipexport.js**: 仅适用于 Dify 版本 < 1.10.0
+- **nozipexport-new.js**: 适用于 Dify 版本 >= 1.10.0
+
+由于 Dify 在 1.10.0 版本更新了认证机制，不同版本需要使用对应的导出脚本才能正常工作。
+
 ## 使用方法
 
 ### 方法一：ZIP 压缩包格式下载
@@ -27,7 +34,7 @@ fetch('https://raw.githubusercontent.com/MinorBoy/dify-workflow-batch-export/ref
 或者直接复制源码：
 https://raw.githubusercontent.com/MinorBoy/dify-workflow-batch-export/refs/heads/main/export.js
 
-### 方法二：DSL 单文件形式下载
+### 方法二：DSL 单文件形式下载（适用于 Dify < 1.10.0）
 
 将以下代码复制并在浏览器控制台中运行：
 
@@ -40,12 +47,25 @@ fetch('https://raw.githubusercontent.com/MinorBoy/dify-workflow-batch-export/ref
 或者直接复制源码：
 https://raw.githubusercontent.com/MinorBoy/dify-workflow-batch-export/refs/heads/main/nozipexport.js
 
+### 方法三：DSL 单文件形式下载（适用于 Dify >= 1.10.0）
+
+将以下代码复制并在浏览器控制台中运行：
+
+```javascript
+fetch('https://raw.githubusercontent.com/MinorBoy/dify-workflow-batch-export/refs/heads/main/nozipexport-new.js')
+  .then(res => res.text())
+  .then(script => eval(script));
+```
+
+或者直接复制源码：
+https://raw.githubusercontent.com/MinorBoy/dify-workflow-batch-export/refs/heads/main/nozipexport-new.js
+
 ## 使用步骤
 
 1. 登录到 Dify 控制台
 2. 打开浏览器开发者工具（通常按 F12）
 3. 切换到 Console（控制台）标签
-4. 将上述任一代码粘贴到控制台中并按回车执行
+4. 根据您的 Dify 版本选择对应脚本，将代码粘贴到控制台中并按回车执行
 5. 等待脚本执行完成，文件将自动下载
 
 ![使用示例](https://github.com/user-attachments/assets/b4e7b6d4-fa37-4c37-9907-febce199d5e9)
@@ -59,4 +79,5 @@ https://raw.githubusercontent.com/MinorBoy/dify-workflow-batch-export/refs/heads
 ## 文件说明
 
 - `export.js`：ZIP 打包导出脚本
-- `nozipexport.js`：单文件分别导出脚本
+- `nozipexport.js`：单文件分别导出脚本（适用于 Dify < 1.10.0）
+- `nozipexport-new.js`：单文件分别导出脚本（适用于 Dify >= 1.10.0）

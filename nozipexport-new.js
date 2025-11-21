@@ -1,6 +1,6 @@
 // 下载所有应用YAML文件（动态日期，格式：应用名_dify_workflow_YYYYMMDD.yaml）
-// 注意：此脚本仅适用于 Dify 版本 < 1.10.0
-// 对于 Dify >= 1.10.0 版本，请使用 nozipexport-new.js
+// 注意：此脚本仅适用于 Dify 版本 >= 1.10.0
+// 对于 Dify < 1.10.0 版本，请使用 nozipexport.js
 (() => {
   // 1. 获取动态日期（格式：YYYYMMDD，自动补0处理）
   const getDynamicDate = () => {
@@ -12,14 +12,47 @@
   };
 
   // 2. 基础配置
-  const token = localStorage.console_token || sessionStorage.console_token || window.console_token;
+  const baseUrl = window.location.origin; // 添加基础URL支持
   const dynamicDate = getDynamicDate(); // 动态生成当前日期
-  
+
   // 版本兼容性提示
-  console.log('%c注意：此脚本仅适用于 Dify 版本 < 1.10.0', 'color: #ff9800; font-weight: bold;');
-  console.log('%c对于 Dify >= 1.10.0 版本，请使用 nozipexport-new.js', 'color: #ff9800; font-weight: bold;');
-  
-  if (!token) return console.error('❌ 未找到console_token，请先登录');
+  console.log('%c注意：此脚本仅适用于 Dify 版本 >= 1.10.0', 'color: #ff9800; font-weight: bold;');
+  console.log('%c对于 Dify < 1.10.0 版本，请使用 nozipexport.js', 'color: #ff9800; font-weight: bold;');
+
+  // 获取 CSRF token 的多种方式
+  const getCsrfToken = () => {
+    // 方式1: 从 meta 标签获取
+    let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    
+    // 方式2: 从 cookie 中获取 csrf_token
+    if (!csrfToken) {
+      const cookies = document.cookie.split(';');
+      const csrfCookie = cookies.find(cookie => cookie.trim().startsWith('csrf_token='));
+      if (csrfCookie) {
+        csrfToken = csrfCookie.split('=')[1];
+      }
+    }
+    
+    // 方式3: 从 localStorage 获取
+    if (!csrfToken) {
+      csrfToken = localStorage.getItem('csrf-token') || sessionStorage.getItem('csrf-token');
+    }
+    
+    return csrfToken;
+  };
+
+  const csrfToken = getCsrfToken();
+
+  if (!csrfToken) {
+    console.error('❌ 未找到 CSRF Token，请先登录并在支持的页面运行此脚本');
+    console.info('💡 提示：请确保您已登录Dify平台，并在应用列表等页面上运行此脚本');
+    console.info('🔧 调试信息：');
+    console.info('- Meta标签中的CSRF Token:', document.querySelector('meta[name="csrf-token"]')?.content);
+    console.info('- Cookie中的信息:', document.cookie);
+    console.info('- LocalStorage中的csrf-token:', localStorage.getItem('csrf-token'));
+    console.info('- SessionStorage中的csrf-token:', sessionStorage.getItem('csrf-token'));
+    return;
+  }
 
   // 3. 获取所有应用列表（支持分页）
   const fetchAllApps = async () => {
@@ -31,13 +64,19 @@
 
     while (hasMore) {
       try {
-        const response = await fetch(`/console/api/apps?page=${page}&limit=100&name=&is_created_by_me=false`, {
-          headers: { 'Authorization': `Bearer ${token}` },
+        const response = await fetch(`${baseUrl}/console/api/apps?page=${page}&limit=100&name=&is_created_by_me=false`, {
+          headers: { 
+            'x-csrf-token': csrfToken,
+            'Content-Type': 'application/json',
+          },
           credentials: 'include'
         });
 
         if (!response.ok) {
-          throw new Error(`应用列表请求失败：${response.status}`);
+          if (response.status === 401) {
+            throw new Error(`认证失败，请检查您的登录状态和访问权限`);
+          }
+          throw new Error(`应用列表请求失败：${response.status} ${response.statusText}`);
         }
 
         const appData = await response.json();
@@ -58,7 +97,7 @@
         
         page++;
       } catch (err) {
-        console.error(`❌ 获取第${page}页应用失败：`, err);
+        console.error(`❌ 获取第${page}页应用失败：`, err.message || err);
         hasMore = false;
       }
     }
@@ -69,13 +108,16 @@
   // 4. 下载单个应用的YAML文件
   const downloadAppYaml = async (app, index, total) => {
     try {
-      const response = await fetch(`/console/api/apps/${app.id}/export?include_secret=false`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+      const response = await fetch(`${baseUrl}/console/api/apps/${app.id}/export?include_secret=false`, {
+        headers: { 
+          'x-csrf-token': csrfToken,
+          'Content-Type': 'application/json',
+        },
         credentials: 'include'
       });
 
       if (!response.ok) {
-        throw new Error(`应用【${app.name}】导出失败：${response.status}`);
+        throw new Error(`应用【${app.name}】导出失败：${response.status} ${response.statusText}`);
       }
 
       const exportJson = await response.json();
@@ -101,7 +143,7 @@
       console.log(`✅ 已下载(${index + 1}/${total})：${fileName}`);
       return true;
     } catch (err) {
-      console.error(`❌ 应用【${app.name || app.id}】处理失败：`, err);
+      console.error(`❌ 应用【${app.name || app.id}】处理失败：`, err.message || err);
       return false;
     }
   };
@@ -109,6 +151,11 @@
   // 5. 主流程
   const main = async () => {
     try {
+      console.log(`🚀 开始执行Dify工作流批量导出任务`);
+      console.log(`🌐 API基础地址: ${baseUrl}`);
+      console.log(`📅 使用日期戳: ${dynamicDate}`);
+      console.log(`🔑 CSRF Token: ${csrfToken ? '已找到' : '未找到'}`);
+      
       // 获取所有应用
       const apps = await fetchAllApps();
       
@@ -129,8 +176,12 @@
       }
       
       console.log(`\n🎉 批量下载完成！成功下载 ${successCount}/${apps.length} 个应用`);
+      
+      if (successCount !== apps.length) {
+        console.warn(`⚠️ 有 ${apps.length - successCount} 个应用下载失败，请查看上方错误信息`);
+      }
     } catch (err) {
-      console.error('❌ 整体流程失败：', err);
+      console.error('❌ 整体流程失败：', err.message || err);
     }
   };
 
